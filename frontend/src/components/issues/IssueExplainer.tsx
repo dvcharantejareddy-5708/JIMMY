@@ -148,7 +148,7 @@ ${explanation.thingsToBeCarefulAbout?.map((c) => `- ${c}`).join('\n') || 'None'}
 
         {/* Labels & Tags */}
         <div className="flex flex-wrap items-center gap-2">
-          {issue.labels.map((label) => (
+          {(issue.labels || []).map((label) => (
             <span
               key={label.id}
               className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200"

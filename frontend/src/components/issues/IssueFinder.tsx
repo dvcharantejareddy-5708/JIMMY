@@ -49,7 +49,7 @@ export const IssueFinder: React.FC<IssueFinderProps> = ({
       let score = 50;
       const lowerTitle = issue.title.toLowerCase();
       const lowerBody = (issue.body || '').toLowerCase();
-      const labelNames = issue.labels.map((l) => l.name.toLowerCase());
+      const labelNames = (issue.labels || []).map((l) => (l.name || '').toLowerCase());
 
       const hasGoodFirst = labelNames.some((l) => l.includes('good first') || l.includes('beginner') || l.includes('starter'));
       const hasHelpWanted = labelNames.some((l) => l.includes('help wanted'));
@@ -110,7 +110,7 @@ export const IssueFinder: React.FC<IssueFinderProps> = ({
       if (!matchesSearch) return false;
 
       // Category Filters
-      const labelNames = issue.labels.map((l) => l.name.toLowerCase());
+      const labelNames = (issue.labels || []).map((l) => (l.name || '').toLowerCase());
       if (selectedFilter === 'beginner') {
         return (issue.beginnerSuitability?.score ?? 0) >= 60;
       }
@@ -338,9 +338,9 @@ export const IssueFinder: React.FC<IssueFinderProps> = ({
                 </div>
 
                 {/* Labels */}
-                {issue.labels.length > 0 && (
+                {(issue.labels || []).length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {issue.labels.slice(0, 4).map((label) => (
+                    {(issue.labels || []).slice(0, 4).map((label) => (
                       <span
                         key={label.id}
                         className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-700"

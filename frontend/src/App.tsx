@@ -111,8 +111,8 @@ export const App: React.FC = () => {
       localStorage.setItem('jimmy_last_analyzed_repo', rawUrl);
       addToast(`Connected to ${metadata.fullName}!`, 'success');
 
-      // Fetch Issues in parallel
-      fetchIssues(metadata.owner, metadata.name);
+      // Fetch Issues in parallel (will auto-select first issue for instant Explainer & Roadmap)
+      fetchIssues(metadata.owner, metadata.name, metadata);
 
       // Trigger Gemma 4 Project Explanation
       fetchRepoExplanation(metadata);
@@ -138,12 +138,16 @@ export const App: React.FC = () => {
     }
   };
 
-  const fetchIssues = async (owner: string, repo: string) => {
+  const fetchIssues = async (owner: string, repo: string, meta?: RepositoryMetadata) => {
     setIsLoadingIssues(true);
     setIssuesError(null);
     try {
       const res = await JimmyApi.getIssues(owner, repo, 1, 30);
       setIssues(res.issues);
+      const activeMeta = meta || repoMetadata;
+      if (res.issues.length > 0 && activeMeta) {
+        handleSelectIssue(res.issues[0], false, activeMeta);
+      }
     } catch (err: any) {
       setIssuesError(err.message || 'Could not fetch open issues.');
     } finally {
@@ -170,19 +174,20 @@ export const App: React.FC = () => {
   };
 
   // Select Issue Flow
-  const handleSelectIssue = async (issue: GitHubIssue, simplified?: boolean) => {
+  const handleSelectIssue = async (issue: GitHubIssue, simplified?: boolean, customMeta?: RepositoryMetadata) => {
+    const meta = customMeta || repoMetadata;
     setSelectedIssue(issue);
     if (!simplified) {
       setIssueExplanation(null);
       setRoadmap(null);
     }
 
-    if (!repoMetadata) return;
+    if (!meta) return;
 
     // Fetch Issue Explanation with 9 structured sections
     setIsLoadingIssueExplanation(true);
     try {
-      const expl = await JimmyApi.explainIssue(issue, repoMetadata, { isSimplified: simplified });
+      const expl = await JimmyApi.explainIssue(issue, meta, { isSimplified: simplified });
       setIssueExplanation(expl);
     } catch (err: any) {
       addToast(err.message || 'Failed to explain issue with Gemma 4.', 'error');
@@ -192,7 +197,7 @@ export const App: React.FC = () => {
 
     if (!simplified) {
       // Pre-fetch Roadmap in background
-      fetchRoadmap(issue, repoMetadata);
+      fetchRoadmap(issue, meta);
     }
   };
 

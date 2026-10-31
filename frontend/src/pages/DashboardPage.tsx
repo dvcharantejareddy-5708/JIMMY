@@ -178,21 +178,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           { id: 'setup', label: 'Project Setup Guide', icon: Layers },
           { id: 'issues', label: `Beginner Issues (${issues.length})`, icon: Sparkles },
           { id: 'graph', label: 'Code Explorer (Graphify)', icon: Network },
-          { id: 'explainer', label: selectedIssue ? `Issue #${selectedIssue.number}` : 'Issue Explainer', icon: HelpCircle, disabled: !selectedIssue },
-          { id: 'roadmap', label: 'Contribution Roadmap', icon: ListTodo, disabled: !selectedIssue },
+          { id: 'explainer', label: selectedIssue ? `Issue #${selectedIssue.number}` : 'Issue Explainer', icon: HelpCircle },
+          { id: 'roadmap', label: 'Contribution Roadmap', icon: ListTodo },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              disabled={tab.disabled}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => {
+                if ((tab.id === 'explainer' || tab.id === 'roadmap') && !selectedIssue && issues.length > 0) {
+                  onSelectIssue(issues[0]);
+                }
+                setActiveTab(tab.id as any);
+              }}
               className={`inline-flex items-center px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
                 isActive
                   ? 'bg-midnight text-white shadow-sm'
-                  : tab.disabled
-                  ? 'text-slate-300 cursor-not-allowed'
                   : 'text-slate-600 hover:text-midnight hover:bg-slate-100'
               }`}
             >
@@ -340,29 +342,83 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       )}
 
       {/* Tab 5: AI Issue Explainer */}
-      {activeTab === 'explainer' && selectedIssue && (
-        <IssueExplainer
-          issue={selectedIssue}
-          explanation={issueExplanation}
-          isLoading={isLoadingIssueExplanation}
-          onExplainAgain={onExplainIssueAgain}
-          onNavigateToRoadmap={() => setActiveTab('roadmap')}
-          onNavigateToGraph={() => setActiveTab('graph')}
-          onAskAI={(q) => onOpenChat(q)}
-          repoMetadata={metadata}
-        />
+      {activeTab === 'explainer' && (
+        selectedIssue ? (
+          <IssueExplainer
+            issue={selectedIssue}
+            explanation={issueExplanation}
+            isLoading={isLoadingIssueExplanation}
+            onExplainAgain={onExplainIssueAgain}
+            onNavigateToRoadmap={() => setActiveTab('roadmap')}
+            onNavigateToGraph={() => setActiveTab('graph')}
+            onAskAI={(q) => onOpenChat(q)}
+            repoMetadata={metadata}
+          />
+        ) : (
+          <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-4 shadow-soft-card">
+            <div className="w-12 h-12 rounded-2xl bg-primary-purple/10 text-primary-purple flex items-center justify-center mx-auto">
+              <HelpCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-midnight">Select an Issue to Explain</h3>
+            <p className="text-xs sm:text-sm text-brand-muted max-w-md mx-auto">
+              Choose one of the {issues.length} beginner-friendly issues to view Gemma 4's 9-section structured breakdown.
+            </p>
+            {issues.length > 0 ? (
+              <button
+                onClick={() => onSelectIssue(issues[0])}
+                className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary-purple hover:bg-primary-purple/90 shadow-sm"
+              >
+                Explain Issue #{issues[0].number} ({issues[0].title.slice(0, 36)}...)
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveTab('issues')}
+                className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-midnight hover:bg-slate-800"
+              >
+                Browse Beginner Issues
+              </button>
+            )}
+          </div>
+        )
       )}
 
       {/* Tab 6: Contribution Roadmap */}
-      {activeTab === 'roadmap' && selectedIssue && (
-        <ContributionRoadmap
-          roadmap={roadmap}
-          isLoading={isLoadingRoadmap}
-          issue={selectedIssue}
-          repoMetadata={metadata}
-          onNavigateToGraph={() => setActiveTab('graph')}
-          onRegenerate={onGenerateRoadmap}
-        />
+      {activeTab === 'roadmap' && (
+        selectedIssue ? (
+          <ContributionRoadmap
+            roadmap={roadmap}
+            isLoading={isLoadingRoadmap}
+            issue={selectedIssue}
+            repoMetadata={metadata}
+            onNavigateToGraph={() => setActiveTab('graph')}
+            onRegenerate={onGenerateRoadmap}
+          />
+        ) : (
+          <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-4 shadow-soft-card">
+            <div className="w-12 h-12 rounded-2xl bg-primary-purple/10 text-primary-purple flex items-center justify-center mx-auto">
+              <ListTodo className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-midnight">Select an Issue for Contribution Roadmap</h3>
+            <p className="text-xs sm:text-sm text-brand-muted max-w-md mx-auto">
+              Generate a step-by-step checklist with verified shell commands and pull request guidance.
+            </p>
+            {issues.length > 0 ? (
+              <button
+                onClick={() => onSelectIssue(issues[0])}
+                className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary-purple hover:bg-primary-purple/90 shadow-sm"
+              >
+                Generate Roadmap for Issue #{issues[0].number}
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveTab('issues')}
+                className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-midnight hover:bg-slate-800"
+              >
+                Browse Beginner Issues
+              </button>
+            )}
+          </div>
+        )
       )}
     </div>
   );
